@@ -1,0 +1,14 @@
+<%- include('layout', { title: 'Admin Dashboard', body: `
+    <h2>Add FAQ</h2>
+        <form action="/admin/faq" method="POST">
+        <div>
+            <label for="question">Question:</label>
+            <input type="text" id="question" name="question" required>
+        </div>
+        <div>
+            <label for="answer">Answer:</label>
+            <textarea id="answer" name="answer" required></textarea>
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+` }) %>

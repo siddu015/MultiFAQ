@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const path = require("path");
 const methodOverride = require('method-override');
 const ejsMate = require("ejs-mate");
-
+const FAQ = require("./models/faqModel");
 
 const port = 8080;
 const MONGO_URL = "mongodb://127.0.0.1:27017/multiFAQ";
@@ -28,50 +28,41 @@ app.use(methodOverride('_method'));
 app.engine('ejs', ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
 
+// Default credentials for admin login
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "password";
 
-app.get('/', (req, res) => {
-    res.send("Hello World!");
-})
-
-
-const FAQ = require("./models/faqModel");
-
-// Test route to create a sample FAQ
-app.get("/test-faq", async (req, res) => {
-    const sampleFAQ = new FAQ({
-        question: "What is Node.js?",
-        answer: "Node.js is a runtime environment for executing JavaScript code outside of a browser.",
-        translations: {
-            question_te: "Node.js అంటే ఏమిటి?",
-            answer_te: "Node.js అనేది బ్రౌజర్ వెలుపల JavaScript కోడ్‌ను అమలు చేయడానికి రన్‌టైం ఎన్విరాన్‌మెంట్.",
-            question_kn: "Node.js ಎಂದರೇನು?",
-            answer_kn: "Node.js ಎಂಬುದು ಬ್ರೌಸರ್ ಹೊರಗೆ JavaScript ಕೋಡ್ ಅನ್ನು ಕಾರ್ಯಗತಗೊಳಿಸಲು ರನ್‌ಟೈಮ್ ಪರಿಸರವಾಗಿದೆ.",
-            question_ta: "Node.js என்றால் என்ன?",
-            answer_ta: "Node.js என்பது ஒரு உலாவியின் வெளியே JavaScript குறியீட்டை இயக்குவதற்கான ரன்டைம் சூழல்.",
-            question_hi: "Node.js क्या है?",
-            answer_hi: "Node.js एक ब्राउज़र के बाहर JavaScript कोड को निष्पादित करने के लिए एक रनटाइम वातावरण है।",
-        },
-    });
-
-    await sampleFAQ.save();
-    res.send("Sample FAQ created successfully!");
+// Render login page
+app.get("/admin", (req, res) => {
+    res.render("login");
 });
 
-// Test route to fetch translated FAQ
-app.get("/get-faq/:lang", async (req, res) => {
-    const { lang } = req.params;
-    const faq = await FAQ.findOne({});
-
-    if (!faq) {
-        return res.status(404).send("No FAQ found!");
+// Handle login form submission
+app.post("/admin/login", (req, res) => {
+    const { username, password } = req.body;
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        res.redirect("/admin/dashboard");
+    } else {
+        res.send("Invalid credentials!");
     }
+});
 
-    const translatedFAQ = faq.getTranslatedText(lang);
-    res.json(translatedFAQ);
+// Render admin dashboard
+app.get("/admin/dashboard", (req, res) => {
+    res.render("admin", { title: "Admin Dashboard" });
+});
+
+// Handle FAQ form submission
+app.post("/admin/faq", async (req, res) => {
+    const { question, answer } = req.body;
+    const newFAQ = new FAQ({ question, answer });
+    await newFAQ.save();
+    res.redirect("/admin/dashboard");
 });
 
 
-// Patch Route
+
+// Server Start
 app.listen(port, () => {
     console.log(port, "is running");
 });
