@@ -6,6 +6,7 @@ const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const axios = require("axios");
+const session = require("express-session");
 const FAQ = require("./models/faqModel");
 
 const app = express();
@@ -16,7 +17,7 @@ const API_KEY = process.env.GOOGLE_CLOUD_API_KEY;
 // Check if API Key is loaded
 if (!API_KEY) {
     console.error("ERROR: GOOGLE_CLOUD_API_KEY is missing in .env file!");
-    process.exit(1); // Stop execution if API key is missing
+    process.exit(1);
 }
 
 // Connect to MongoDB
@@ -32,12 +33,21 @@ mongoose
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "/public")));
-// app.use('/ckeditor', express.static(path.join(__dirname, 'node_modules', '@ckeditor', 'ckeditor5-build-classic', 'build')));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.engine("ejs", ejsMate);
 
-// Google Translate API Function (Using Axios)
+// Session Middleware (Authentication)
+app.use(
+    session({
+        secret: "your_secret_key", // Change to a strong, random secret
+        resave: false,
+        saveUninitialized: true,
+        cookie: { secure: false }, // Set to `true` if using HTTPS
+    })
+);
+
+// Google Translate API Function
 const translateText = async (text, targetLang) => {
     try {
         const response = await axios.post(
@@ -53,13 +63,21 @@ const translateText = async (text, targetLang) => {
         return response.data.data.translations[0].translatedText;
     } catch (err) {
         console.error(`Translation Error (${targetLang}):`, err.response?.data || err.message);
-        return text; // Return original text if translation fails
+        return text;
     }
 };
 
 // Default Admin Credentials
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "password";
+
+// Middleware to Protect Admin Routes
+const requireLogin = (req, res, next) => {
+    if (!req.session.isAuthenticated) {
+        return res.redirect("/admin"); // Redirect to login page if not logged in
+    }
+    next();
+};
 
 // Routes
 
@@ -72,14 +90,22 @@ app.get("/admin", (req, res) => {
 app.post("/admin/login", (req, res) => {
     const { username, password } = req.body;
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        req.session.isAuthenticated = true;
         res.redirect("/admin/dashboard");
     } else {
         res.send("Invalid credentials!");
     }
 });
 
-// Render admin dashboard
-app.get("/admin/dashboard", async (req, res) => {
+// Logout route
+app.get("/admin/logout", (req, res) => {
+    req.session.destroy(() => {
+        res.redirect("/admin"); // Redirect to login page
+    });
+});
+
+// Render admin dashboard (Protected)
+app.get("/admin/dashboard", requireLogin, async (req, res) => {
     try {
         const faqs = await FAQ.find({});
         res.render("admin", { title: "Admin Dashboard", faqs });
@@ -89,13 +115,11 @@ app.get("/admin/dashboard", async (req, res) => {
     }
 });
 
-// Handle FAQ form submission
-app.post("/admin/faq", async (req, res) => {
+// Handle Add FAQ Form Submission (Protected)
+app.post("/admin/faq", requireLogin, async (req, res) => {
     const { question, answer } = req.body;
 
-    console.log(req.body);
     try {
-        // Translate into multiple languages
         const translations = {
             question_en: question,
             answer_en: answer,
@@ -109,8 +133,7 @@ app.post("/admin/faq", async (req, res) => {
             answer_hi: await translateText(answer, "hi"),
         };
 
-        // Save FAQ to database
-        await FAQ({ question, answer, translations }).save();
+        await FAQ.create({ question, answer, translations });
 
         res.redirect("/admin/dashboard");
     } catch (err) {
@@ -119,8 +142,8 @@ app.post("/admin/faq", async (req, res) => {
     }
 });
 
-// Render edit form
-app.get("/admin/faq/:id/edit", async (req, res) => {
+// Render Edit FAQ Form (Protected)
+app.get("/admin/faq/:id/edit", requireLogin, async (req, res) => {
     try {
         const faq = await FAQ.findById(req.params.id);
         if (!faq) {
@@ -133,26 +156,24 @@ app.get("/admin/faq/:id/edit", async (req, res) => {
     }
 });
 
-// Handle edit form submission
-app.post("/admin/faq/:id/edit", async (req, res) => {
+// Handle Edit FAQ Form Submission (Protected)
+app.post("/admin/faq/:id/edit", requireLogin, async (req, res) => {
     const { question, answer } = req.body;
 
     try {
-        // Translate the updated question and answer into all languages
         const translations = {
-            question_en: question, // English (original)
-            answer_en: answer,     // English (original)
-            question_te: await translateText(question, "te"), // Telugu
+            question_en: question,
+            answer_en: answer,
+            question_te: await translateText(question, "te"),
             answer_te: await translateText(answer, "te"),
-            question_kn: await translateText(question, "kn"), // Kannada
+            question_kn: await translateText(question, "kn"),
             answer_kn: await translateText(answer, "kn"),
-            question_ta: await translateText(question, "ta"), // Tamil
+            question_ta: await translateText(question, "ta"),
             answer_ta: await translateText(answer, "ta"),
-            question_hi: await translateText(question, "hi"), // Hindi
+            question_hi: await translateText(question, "hi"),
             answer_hi: await translateText(answer, "hi"),
         };
 
-        // Update the FAQ in the database
         await FAQ.findByIdAndUpdate(req.params.id, { question, answer, translations });
 
         res.redirect("/admin/dashboard");
@@ -162,8 +183,8 @@ app.post("/admin/faq/:id/edit", async (req, res) => {
     }
 });
 
-// Handle delete form submission
-app.post("/admin/faq/:id/delete", async (req, res) => {
+// Handle Delete FAQ (Protected)
+app.post("/admin/faq/:id/delete", requireLogin, async (req, res) => {
     try {
         await FAQ.findByIdAndDelete(req.params.id);
         res.redirect("/admin/dashboard");
@@ -177,7 +198,6 @@ app.post("/admin/faq/:id/delete", async (req, res) => {
 app.get("/faqs", (req, res) => {
     res.render("user", { title: "FAQs" });
 });
-
 
 // Fetch FAQs by language
 app.get("/api/faqs", async (req, res) => {
@@ -197,5 +217,3 @@ app.get("/api/faqs", async (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
-
-
