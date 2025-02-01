@@ -3,84 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit FAQ</title>
-    <link rel="stylesheet" href="/styles.css">
-    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script></head>
-<body>
-<header>
-    <h1>MultiFAQ Admin Panel</h1>
+    <title>Edit FAQ - MultiFAQ Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+    <style>
+        .ck-editor__editable { min-height: 200px; }
+        .btn-edit { @apply px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors; }
+        .btn-delete { @apply px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors; }
+    </style>
+</head>
+<body class="bg-gray-50">
+<header class="bg-gray-800 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold">MultiFAQ Admin Panel</h1>
+            <nav>
+                <a href="/" class="text-gray-300 hover:text-white">View Public Site</a>
+            </nav>
+        </div>
+    </div>
 </header>
-<main>
-    <h2>Admin Dashboard</h2>
 
-    <!-- Add New FAQ Form -->
-    <h3>Add New FAQ</h3>
-    <form action="/admin/faq" method="POST" id="faqForm">
-        <div>
-            <label for="question">Question:</label>
-            <input type="text" id="question" name="question" required>
-        </div>
-        <div>
-            <label for="answer">Answer:</label>
-            <textarea id="answer" name="answer" required> Write an answer </textarea>
-        </div>
-        <button type="submit">Add FAQ</button>
-    </form>
+<main class="max-w-7xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-6 text-gray-800">FAQ Management</h2>
 
+        <!-- Add New FAQ Form -->
+        <section class="mb-8">
+            <h3 class="text-xl font-medium mb-4 text-gray-700">Add New FAQ</h3>
+            <form action="/admin/faq" method="POST" id="faqForm" class="space-y-6">
+                <div class="grid gap-4">
+                    <div>
+                        <label for="question" class="block text-sm font-medium text-gray-700 mb-2">Question</label>
+                        <input type="text" id="question" name="question" required
+                               class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
 
+                    <div>
+                        <label for="answer" class="block text-sm font-medium text-gray-700 mb-2">Answer</label>
+                        <div id="editor-container" class="border rounded-md">
+                            <textarea id="answer" name="answer" required class="hidden">Write an answer</textarea>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Display All FAQs -->
-    <h3>Existing FAQs</h3>
-    <% if (faqs.length > 0) { %>
-        <table>
-            <thead>
-            <tr>
-                <th>Question</th>
-                <th>Answer</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <% faqs.forEach(faq => { %>
-                <tr>
-                    <td><%= faq.question %></td>
-                    <td><%- faq.answer %></td>
-                    <td>
-                        <!-- Edit Button -->
-                        <a href="/admin/faq/<%= faq._id %>/edit" class="btn-edit">Edit</a>
-                        <!-- Delete Button -->
-                        <form action="/admin/faq/<%= faq._id %>/delete" method="POST" style="display: inline;">
-                            <button type="submit" class="btn-delete">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            <% }) %>
-            </tbody>
-        </table>
-    <% } else { %>
-        <p>No FAQs found. Add a new FAQ using the form above.</p>
-    <% } %>
+                <button type="submit"
+                        class="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Add FAQ
+                </button>
+            </form>
+        </section>
+
+        <!-- Existing FAQs Table -->
+        <section>
+            <h3 class="text-xl font-medium mb-4 text-gray-700">Existing FAQs</h3>
+            <% if (faqs.length > 0) { %>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Question</th>
+                            <th class="px-6 py-3 text-left text-sm font-medium text-gray-700">Answer</th>
+                            <th class="px-6 py-3 text-right text-sm font-medium text-gray-700">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                        <% faqs.forEach(faq => { %>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 text-sm text-gray-900 max-w-xs"><%= faq.question %></td>
+                                <td class="px-6 py-4 text-sm text-gray-600 max-w-prose"><%- faq.answer %></td>
+                                <td class="px-6 py-4 text-sm text-right space-x-2">
+                                    <a href="/admin/faq/<%= faq._id %>/edit" class="btn-edit">Edit</a>
+                                    <form action="/admin/faq/<%= faq._id %>/delete" method="POST" class="inline">
+                                        <button type="submit" class="btn-delete">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="text-center p-8 bg-gray-50 rounded-lg">
+                    <p class="text-gray-500">No FAQs found. Add a new FAQ using the form above.</p>
+                </div>
+            <% } %>
+        </section>
+    </div>
 </main>
-<script>
-    let editor;
 
+<script>
     ClassicEditor
-        .create(document.querySelector('#answer'))
-        .then(instance => {
-            editor = instance; // Store the editor instance
+        .create(document.querySelector('#answer'), {
+            toolbar: {
+                items: [
+                    'heading', '|',
+                    'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
+                    'undo', 'redo'
+                ]
+            }
+        })
+        .then(editor => {
+            window.editor = editor;
+            document.getElementById('faqForm').addEventListener('submit', function(e) {
+                editor.updateSourceElement();
+            });
         })
         .catch(error => {
             console.error(error);
         });
-
-    document.getElementById('faqForm').addEventListener('submit', function (e) {
-        e.preventDefault(); // Prevent default form submission
-
-        editor.updateSourceElement();
-
-        this.submit();
-    });
 </script>
-
 </body>
 </html>

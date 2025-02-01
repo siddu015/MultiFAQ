@@ -16,6 +16,7 @@
     "axios": "^1.7.9",
     "body-parser": "^1.20.3",
     "ckeditor4": "^4.25.0",
+    "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "ejs-mate": "^4.0.0",

@@ -3,55 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FAQs</title>
-    <link rel="stylesheet" href="/styles.css">
+    <title>FAQs - MultiFAQ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
-<body>
-<header>
-    <h1>FAQs</h1>
+<body class="bg-gray-50">
+<header class="bg-indigo-600 text-white shadow-lg">
+    <div class="max-w-4xl mx-auto px-4 py-6">
+        <h1 class="text-3xl font-bold text-center">Frequently Asked Questions</h1>
+    </div>
 </header>
-<main>
-    <!-- Language Selection Dropdown -->
-    <div>
-        <label for="language">Select Language:</label>
-        <select id="language">
-            <option value="en">English</option>
-            <option value="te">Telugu</option>
-            <option value="kn">Kannada</option>
-            <option value="ta">Tamil</option>
-            <option value="hi">Hindi</option>
-        </select>
-        <button id="loadFaqs">Load FAQs</button>
+
+<main class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Language Selector -->
+    <div class="mb-8 bg-white rounded-lg shadow-md p-6">
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+            <label class="text-sm font-medium text-gray-700">Select Language:</label>
+            <select
+                    id="language"
+                    class="w-full sm:w-48 px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+                <option value="en">English</option>
+                <option value="te">Telugu</option>
+                <option value="kn">Kannada</option>
+                <option value="ta">Tamil</option>
+                <option value="hi">Hindi</option>
+            </select>
+            <button
+                    id="loadFaqs"
+                    class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+            >
+                <span>Load FAQs</span>
+                <div id="loadingSpinner" class="hidden">
+                    <div class="loader"></div>
+                </div>
+            </button>
+        </div>
     </div>
 
     <!-- FAQs List -->
-    <div id="faqsList">
-        <!-- FAQs will be dynamically loaded here -->
+    <div id="faqsList" class="space-y-6">
+        <!-- Content will be populated by JavaScript -->
     </div>
+
+    <!-- Error Display -->
+    <div id="errorMessage" class="hidden p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg"></div>
 </main>
 
 <script>
-    document.getElementById('loadFaqs').addEventListener('click', async () => {
-        const language = document.getElementById('language').value;
-        const response = await fetch(`/api/faqs?lang=${language}`);
-        const faqs = await response.json();
-
+    document.addEventListener('DOMContentLoaded', () => {
+        const loadFaqsButton = document.getElementById('loadFaqs');
         const faqsList = document.getElementById('faqsList');
-        faqsList.innerHTML = ''; // Clear previous FAQs
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingSpinner = document.getElementById('loadingSpinner');
 
-        if (faqs.length > 0) {
-            faqs.forEach(faq => {
-                const faqItem = document.createElement('div');
-                faqItem.classList.add('faq-item');
-                faqItem.innerHTML = `
-                        <h3>${faq.question}</h3>
-                        <p>${faq.answer}</p>
+        const showLoading = () => {
+            loadingSpinner.classList.remove('hidden');
+            loadFaqsButton.disabled = true;
+        };
+
+        const hideLoading = () => {
+            loadingSpinner.classList.add('hidden');
+            loadFaqsButton.disabled = false;
+        };
+
+        const showError = (message) => {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        };
+
+        const clearError = () => {
+            errorMessage.classList.add('hidden');
+            errorMessage.textContent = '';
+        };
+
+        const loadFAQs = async () => {
+            try {
+                showLoading();
+                clearError();
+                faqsList.innerHTML = '';
+
+                const language = document.getElementById('language').value;
+                const response = await fetch(`/api/faqs?lang=${language}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const faqs = await response.json();
+
+                if (faqs.length === 0) {
+                    faqsList.innerHTML = `
+                        <div class="text-center p-8 bg-gray-50 rounded-lg">
+                            <p class="text-gray-500">No FAQs available in this language</p>
+                        </div>
                     `;
-                faqsList.appendChild(faqItem);
-            });
-        } else {
-            faqsList.innerHTML = '<p>No FAQs found for the selected language.</p>';
-        }
+                    return;
+                }
+
+                faqs.forEach(faq => {
+                    const faqItem = document.createElement('div');
+                    faqItem.className = 'bg-white rounded-lg shadow-md p-6';
+                    faqItem.innerHTML = `
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">${faq.question}</h3>
+                        <div class="prose text-gray-600 max-w-none">
+                            ${faq.answer}
+                        </div>
+                    `;
+                    faqsList.appendChild(faqItem);
+                });
+
+            } catch (error) {
+                showError(`Failed to load FAQs: ${error.message}`);
+                console.error('Error loading FAQs:', error);
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // Initial load
+        loadFAQs();
+
+        // Event listener for the load button
+        loadFaqsButton.addEventListener('click', loadFAQs);
     });
 </script>
 </body>
