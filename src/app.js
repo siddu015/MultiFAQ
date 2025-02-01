@@ -78,8 +78,14 @@ app.post("/admin/login", (req, res) => {
 });
 
 // Render admin dashboard
-app.get("/admin/dashboard", (req, res) => {
-    res.render("admin", { title: "Admin Dashboard" });
+app.get("/admin/dashboard", async (req, res) => {
+    try {
+        const faqs = await FAQ.find({});
+        res.render("admin", { title: "Admin Dashboard", faqs });
+    } catch (err) {
+        console.error("Error fetching FAQs:", err);
+        res.status(500).send("Internal Server Error");
+    }
 });
 
 // Handle FAQ form submission
@@ -114,7 +120,64 @@ app.post("/admin/faq", async (req, res) => {
     }
 });
 
+// Render edit form
+app.get("/admin/faq/:id/edit", async (req, res) => {
+    try {
+        const faq = await FAQ.findById(req.params.id);
+        if (!faq) {
+            return res.status(404).send("FAQ not found!");
+        }
+        res.render("edit-faq", { title: "Edit FAQ", faq });
+    } catch (err) {
+        console.error("Error fetching FAQ for edit:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// Handle edit form submission
+app.post("/admin/faq/:id/edit", async (req, res) => {
+    const { question, answer } = req.body;
+
+    try {
+        // Translate the updated question and answer into all languages
+        const translations = {
+            question_en: question, // English (original)
+            answer_en: answer,     // English (original)
+            question_te: await translateText(question, "te"), // Telugu
+            answer_te: await translateText(answer, "te"),
+            question_kn: await translateText(question, "kn"), // Kannada
+            answer_kn: await translateText(answer, "kn"),
+            question_ta: await translateText(question, "ta"), // Tamil
+            answer_ta: await translateText(answer, "ta"),
+            question_hi: await translateText(question, "hi"), // Hindi
+            answer_hi: await translateText(answer, "hi"),
+        };
+
+        // Update the FAQ in the database
+        await FAQ.findByIdAndUpdate(req.params.id, { question, answer, translations });
+
+        res.redirect("/admin/dashboard");
+    } catch (err) {
+        console.error("Error updating FAQ:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// Handle delete form submission
+app.post("/admin/faq/:id/delete", async (req, res) => {
+    try {
+        await FAQ.findByIdAndDelete(req.params.id);
+        res.redirect("/admin/dashboard");
+    } catch (err) {
+        console.error("Error deleting FAQ:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+
 // Start Server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
+
+

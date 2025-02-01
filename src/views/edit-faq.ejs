@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit FAQ</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header>
+    <h1>MultiFAQ Admin Panel</h1>
+</header>
+<main>
+    <h2>Edit FAQ</h2>
+    <form action="/admin/faq/<%= faq._id %>/edit" method="POST">
+        <div>
+            <label for="question">Question:</label>
+            <input type="text" id="question" name="question" value="<%= faq.question %>" required>
+        </div>
+        <div>
+            <label for="answer">Answer:</label>
+            <textarea id="answer" name="answer" required><%= faq.answer %></textarea>
+        </div>
+        <button type="submit">Update FAQ</button>
+    </form>
+    <a href="/admin/dashboard">Cancel</a>
+</main>
+</body>
+</html>

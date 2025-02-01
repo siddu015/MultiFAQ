@@ -1,6 +1,21 @@
-<%- include('layout', { title: 'Admin Dashboard', body: `
-    <h2>Add FAQ</h2>
-        <form action="/admin/faq" method="POST">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header>
+    <h1>MultiFAQ Admin Panel</h1>
+</header>
+<main>
+    <h2>Admin Dashboard</h2>
+
+    <!-- Add New FAQ Form -->
+    <h3>Add New FAQ</h3>
+    <form action="/admin/faq" method="POST">
         <div>
             <label for="question">Question:</label>
             <input type="text" id="question" name="question" required>
@@ -9,6 +24,40 @@
             <label for="answer">Answer:</label>
             <textarea id="answer" name="answer" required></textarea>
         </div>
-        <button type="submit">Submit</button>
+        <button type="submit">Add FAQ</button>
     </form>
-` }) %>
+
+    <!-- Display All FAQs -->
+    <h3>Existing FAQs</h3>
+    <% if (faqs.length > 0) { %>
+        <table>
+            <thead>
+            <tr>
+                <th>Question</th>
+                <th>Answer</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% faqs.forEach(faq => { %>
+                <tr>
+                    <td><%= faq.question %></td>
+                    <td><%= faq.answer %></td>
+                    <td>
+                        <!-- Edit Button -->
+                        <a href="/admin/faq/<%= faq._id %>/edit" class="btn-edit">Edit</a>
+                        <!-- Delete Button -->
+                        <form action="/admin/faq/<%= faq._id %>/delete" method="POST" style="display: inline;">
+                            <button type="submit" class="btn-delete">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>No FAQs found. Add a new FAQ using the form above.</p>
+    <% } %>
+</main>
+</body>
+</html>
