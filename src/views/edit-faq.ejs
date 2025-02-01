@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit FAQ</title>
     <link rel="stylesheet" href="/styles.css">
-</head>
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script></head>
 <body>
 <header>
     <h1>MultiFAQ Admin Panel</h1>
 </header>
 <main>
     <h2>Edit FAQ</h2>
-    <form action="/admin/faq/<%= faq._id %>/edit" method="POST">
+    <form action="/admin/faq/<%= faq._id %>/edit" method="POST" id="editFaqForm">
         <div>
             <label for="question">Question:</label>
             <input type="text" id="question" name="question" value="<%= faq.question %>" required>
@@ -25,5 +25,27 @@
     </form>
     <a href="/admin/dashboard">Cancel</a>
 </main>
+
+<!-- Initialize CKEditor -->
+<script>
+    let editor;
+
+    ClassicEditor
+        .create(document.querySelector('#answer'))
+        .then(instance => {
+            editor = instance; // Store the editor instance
+        })
+        .catch(error => {
+            console.error(error);
+        });
+
+    document.getElementById('editFaqForm').addEventListener('submit', function (e) {
+        e.preventDefault(); // Prevent default form submission
+
+        editor.updateSourceElement();
+
+        this.submit();
+    });
+</script>
 </body>
 </html>

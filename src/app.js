@@ -32,6 +32,7 @@ mongoose
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "/public")));
+// app.use('/ckeditor', express.static(path.join(__dirname, 'node_modules', '@ckeditor', 'ckeditor5-build-classic', 'build')));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.engine("ejs", ejsMate);
@@ -92,6 +93,7 @@ app.get("/admin/dashboard", async (req, res) => {
 app.post("/admin/faq", async (req, res) => {
     const { question, answer } = req.body;
 
+    console.log(req.body);
     try {
         // Translate into multiple languages
         const translations = {
@@ -107,11 +109,8 @@ app.post("/admin/faq", async (req, res) => {
             answer_hi: await translateText(answer, "hi"),
         };
 
-        console.log("Translations:", translations);
-
         // Save FAQ to database
-        const newFAQ = new FAQ({ question, answer, translations });
-        await newFAQ.save();
+        await FAQ({ question, answer, translations }).save();
 
         res.redirect("/admin/dashboard");
     } catch (err) {
@@ -174,6 +173,25 @@ app.post("/admin/faq/:id/delete", async (req, res) => {
     }
 });
 
+// Serve the user page
+app.get("/faqs", (req, res) => {
+    res.render("user", { title: "FAQs" });
+});
+
+
+// Fetch FAQs by language
+app.get("/api/faqs", async (req, res) => {
+    const { lang } = req.query;
+
+    try {
+        const faqs = await FAQ.find({});
+        const translatedFAQs = faqs.map(faq => faq.getTranslatedText(lang || 'en'));
+        res.json(translatedFAQs);
+    } catch (err) {
+        console.error("Error fetching FAQs:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
 
 // Start Server
 app.listen(port, () => {

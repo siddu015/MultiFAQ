@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
+    <title>Edit FAQ</title>
     <link rel="stylesheet" href="/styles.css">
-</head>
+    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script></head>
 <body>
 <header>
     <h1>MultiFAQ Admin Panel</h1>
@@ -15,17 +15,19 @@
 
     <!-- Add New FAQ Form -->
     <h3>Add New FAQ</h3>
-    <form action="/admin/faq" method="POST">
+    <form action="/admin/faq" method="POST" id="faqForm">
         <div>
             <label for="question">Question:</label>
             <input type="text" id="question" name="question" required>
         </div>
         <div>
             <label for="answer">Answer:</label>
-            <textarea id="answer" name="answer" required></textarea>
+            <textarea id="answer" name="answer" required> Write an answer </textarea>
         </div>
         <button type="submit">Add FAQ</button>
     </form>
+
+
 
     <!-- Display All FAQs -->
     <h3>Existing FAQs</h3>
@@ -42,7 +44,7 @@
             <% faqs.forEach(faq => { %>
                 <tr>
                     <td><%= faq.question %></td>
-                    <td><%= faq.answer %></td>
+                    <td><%- faq.answer %></td>
                     <td>
                         <!-- Edit Button -->
                         <a href="/admin/faq/<%= faq._id %>/edit" class="btn-edit">Edit</a>
@@ -59,5 +61,26 @@
         <p>No FAQs found. Add a new FAQ using the form above.</p>
     <% } %>
 </main>
+<script>
+    let editor;
+
+    ClassicEditor
+        .create(document.querySelector('#answer'))
+        .then(instance => {
+            editor = instance; // Store the editor instance
+        })
+        .catch(error => {
+            console.error(error);
+        });
+
+    document.getElementById('faqForm').addEventListener('submit', function (e) {
+        e.preventDefault(); // Prevent default form submission
+
+        editor.updateSourceElement();
+
+        this.submit();
+    });
+</script>
+
 </body>
 </html>
