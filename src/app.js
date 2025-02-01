@@ -8,6 +8,9 @@ const ejsMate = require("ejs-mate");
 const axios = require("axios");
 const session = require("express-session");
 const FAQ = require("./models/faqModel");
+const redis = require("redis");
+const redisClient = redis.createClient();
+
 
 const app = express();
 const port = 8080;
@@ -67,6 +70,7 @@ const translateText = async (text, targetLang) => {
     }
 };
 
+
 // Default Admin Credentials
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "password";
@@ -115,11 +119,12 @@ app.get("/admin/dashboard", requireLogin, async (req, res) => {
     }
 });
 
-// Handle Add FAQ Form Submission (Protected)
-app.post("/admin/faq", requireLogin, async (req, res) => {
+// Add FAQ
+app.post("/admin/faq", async (req, res) => {
     const { question, answer } = req.body;
 
     try {
+        // Translate into multiple languages
         const translations = {
             question_en: question,
             answer_en: answer,
@@ -133,7 +138,12 @@ app.post("/admin/faq", requireLogin, async (req, res) => {
             answer_hi: await translateText(answer, "hi"),
         };
 
-        await FAQ.create({ question, answer, translations });
+        // Save FAQ to database
+        const newFAQ = new FAQ({ question, answer, translations });
+        await newFAQ.save();
+
+        // Clear Redis cache for all languages
+        await redisClient.del("faqs:en", "faqs:te", "faqs:kn", "faqs:ta", "faqs:hi");
 
         res.redirect("/admin/dashboard");
     } catch (err) {
@@ -156,11 +166,12 @@ app.get("/admin/faq/:id/edit", requireLogin, async (req, res) => {
     }
 });
 
-// Handle Edit FAQ Form Submission (Protected)
-app.post("/admin/faq/:id/edit", requireLogin, async (req, res) => {
+// Update FAQ
+app.post("/admin/faq/:id/edit", async (req, res) => {
     const { question, answer } = req.body;
 
     try {
+        // Translate into multiple languages
         const translations = {
             question_en: question,
             answer_en: answer,
@@ -174,7 +185,11 @@ app.post("/admin/faq/:id/edit", requireLogin, async (req, res) => {
             answer_hi: await translateText(answer, "hi"),
         };
 
+        // Update FAQ in the database
         await FAQ.findByIdAndUpdate(req.params.id, { question, answer, translations });
+
+        // Clear Redis cache for all languages
+        await redisClient.del("faqs:en", "faqs:te", "faqs:kn", "faqs:ta", "faqs:hi");
 
         res.redirect("/admin/dashboard");
     } catch (err) {
@@ -183,10 +198,15 @@ app.post("/admin/faq/:id/edit", requireLogin, async (req, res) => {
     }
 });
 
-// Handle Delete FAQ (Protected)
-app.post("/admin/faq/:id/delete", requireLogin, async (req, res) => {
+// Delete FAQ
+app.post("/admin/faq/:id/delete", async (req, res) => {
     try {
+        // Delete FAQ from the database
         await FAQ.findByIdAndDelete(req.params.id);
+
+        // Clear Redis cache for all languages
+        await redisClient.del("faqs:en", "faqs:te", "faqs:kn", "faqs:ta", "faqs:hi");
+
         res.redirect("/admin/dashboard");
     } catch (err) {
         console.error("Error deleting FAQ:", err);
@@ -202,16 +222,45 @@ app.get("/faqs", (req, res) => {
 // Fetch FAQs by language
 app.get("/api/faqs", async (req, res) => {
     const { lang } = req.query;
+    const cacheKey = `faqs:${lang || 'en'}`; // Cache key based on language
 
     try {
+        // Check if data is in Redis cache
+        const cachedData = await redisClient.get(cacheKey);
+
+        if (cachedData) {
+            // Return cached data
+            console.log("Serving from cache");
+            return res.json(JSON.parse(cachedData));
+        }
+
+        // Fetch data from the database
         const faqs = await FAQ.find({});
         const translatedFAQs = faqs.map(faq => faq.getTranslatedText(lang || 'en'));
+
+        // Cache the data in Redis (expire after 1 hour)
+        await redisClient.set(cacheKey, JSON.stringify(translatedFAQs), {
+            EX: 3600, // Expire after 1 hour (in seconds)
+        });
+
+        console.log("Serving from database");
         res.json(translatedFAQs);
     } catch (err) {
         console.error("Error fetching FAQs:", err);
         res.status(500).json({ message: "Internal Server Error" });
     }
 });
+
+// Handle Redis connection errors
+redisClient.on("error", (err) => {
+    console.error("Redis Error:", err);
+});
+
+// Connect to Redis
+redisClient.connect().then(() => {
+    console.log("Connected to Redis");
+});
+
 
 // Start Server
 app.listen(port, () => {
