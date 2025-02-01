@@ -143,7 +143,13 @@ app.post("/admin/faq", async (req, res) => {
         await newFAQ.save();
 
         // Clear Redis cache for all languages
-        await redisClient.del("faqs:en", "faqs:te", "faqs:kn", "faqs:ta", "faqs:hi");
+        await Promise.all([
+            redisClient.del("faqs:en"),
+            redisClient.del("faqs:te"),
+            redisClient.del("faqs:kn"),
+            redisClient.del("faqs:ta"),
+            redisClient.del("faqs:hi")
+        ]);
 
         res.redirect("/admin/dashboard");
     } catch (err) {
@@ -189,7 +195,13 @@ app.post("/admin/faq/:id/edit", async (req, res) => {
         await FAQ.findByIdAndUpdate(req.params.id, { question, answer, translations });
 
         // Clear Redis cache for all languages
-        await redisClient.del("faqs:en", "faqs:te", "faqs:kn", "faqs:ta", "faqs:hi");
+        await Promise.all([
+            redisClient.del("faqs:en"),
+            redisClient.del("faqs:te"),
+            redisClient.del("faqs:kn"),
+            redisClient.del("faqs:ta"),
+            redisClient.del("faqs:hi")
+        ]);
 
         res.redirect("/admin/dashboard");
     } catch (err) {
@@ -204,8 +216,13 @@ app.post("/admin/faq/:id/delete", async (req, res) => {
         // Delete FAQ from the database
         await FAQ.findByIdAndDelete(req.params.id);
 
-        // Clear Redis cache for all languages
-        await redisClient.del("faqs:en", "faqs:te", "faqs:kn", "faqs:ta", "faqs:hi");
+        await Promise.all([
+            redisClient.del("faqs:en"),
+            redisClient.del("faqs:te"),
+            redisClient.del("faqs:kn"),
+            redisClient.del("faqs:ta"),
+            redisClient.del("faqs:hi")
+        ]);
 
         res.redirect("/admin/dashboard");
     } catch (err) {
