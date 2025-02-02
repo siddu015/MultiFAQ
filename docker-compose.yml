@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: multifaq_app
+    restart: always
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/multifaq
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - multifaq_network
+
+  mongo:
+    image: mongo:6.0
+    container_name: multifaq_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    networks:
+      - multifaq_network
+
+  redis:
+    image: redis:7.0
+    container_name: multifaq_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - multifaq_network
+
+volumes:
+  mongo_data:
+
+networks:
+  multifaq_network:
+    driver: bridge

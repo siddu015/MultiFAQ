@@ -3,7 +3,7 @@
 A multilingual FAQ management system with Redis caching and MongoDB for storing frequently asked questions in multiple languages. This project allows you to manage and fetch FAQs in various languages, improving performance through caching.
 
 ## Features
-- **Multilingual Support**: FAQs can be added in multiple languages (e.g., English, Telugu).
+- **Multilingual Support**: FAQs can be added in multiple languages (e.g., English, Telugu, Hindi, etc.).
 - **Redis Cache**: Uses Redis to cache FAQ data for faster retrieval and reduced database load.
 - **MongoDB**: Stores FAQ data with translations.
 - **Admin Panel**: Allows administrators to add and manage FAQs.
@@ -16,15 +16,21 @@ A multilingual FAQ management system with Redis caching and MongoDB for storing 
     /config
         redis.js         // Redis configuration and utility functions
         db.js            // MongoDB connection logic
+    /middleware
+        requireLogin.js  // Ensuring adminRoutes are secured    
     /models
         faqModel.js      // Mongoose schema for storing FAQs
     /routes
         faqRoutes.js     // API routes for CRUD operations
-    /controllers
-        faqController.js // Business logic for handling requests
-    app.js              // Main Express application setup
+        adminRoutes.js   // API Routes for admin portal
     /utils
-        translate.js    // Functions for translation (if used)
+        translate.js     // Functions for translation (if used)
+    /views
+        admin.ejs        // admin dashboard for creating and managing FAQ's
+        edit-faq.ejs     // edit a faq
+        login.ejs        // login portal for admin
+        user.ejs         // user portal to view FAQ's
+    app.js               // Main Express application setup
 /tests
     faqRoutes.test.js   // Unit tests for the FAQ routes
     redis.test.js 
@@ -57,7 +63,7 @@ A multilingual FAQ management system with Redis caching and MongoDB for storing 
    MONGO_URI=mongodb://localhost:27017/multifaq
    REDIS_HOST=localhost
    REDIS_PORT=6379
-   GOOGLE_CLOUD_API_KEY=your-apil-key
+   GOOGLE_CLOUD_API_KEY=your-api-key
    SECRET_KEY=yoursecretkey
    ```
 5. **Run the application:**
@@ -66,6 +72,29 @@ A multilingual FAQ management system with Redis caching and MongoDB for storing 
    nodemon app.js
    ```
    The app should now be running on [http://localhost:8080/faqs](http://localhost:8080/faqs).
+
+## Running with Docker
+You can also run this project using Docker and `docker-compose` for easy deployment.
+
+### Steps to Run with Docker
+1. **Ensure Docker and Docker Compose are installed.**
+2. **Build and start the containers:**
+   ```sh
+   docker-compose up --build
+   ```
+   This will build and start the following services:
+    - `app`: The MultiFAQ Node.js application.
+    - `mongo`: MongoDB database.
+    - `redis`: Redis cache service.
+
+3. **Access the application:**
+    - API: `http://localhost:8080/api/faqs?lang=en`
+    - Admin Panel: `http://localhost:8080/admin`
+
+4. **Stopping the services:**
+   ```sh
+   docker-compose down
+   ```
 
 ## API Endpoints
 ### 1. **POST /admin/faq**
@@ -88,11 +117,11 @@ A multilingual FAQ management system with Redis caching and MongoDB for storing 
     - Returns a list of FAQs in the specified language.
     - If data is not cached, it fetches from the database and caches results in Redis.
 
-## Unit Tests
+## Running Unit Tests
 This project includes unit tests for the FAQ routes, written using Jest.
 
 ### Run Tests
-To run the tests, use the following command in root directory:
+To run the tests, use the following command:
 ```sh
 npx jest tests/faqRoutes.test.js
 ```
@@ -118,5 +147,4 @@ The tests cover:
    ```
 5. **Open a pull request.**
 
-Feel free to modify this README to suit your project requirements!
-
+---
