@@ -11,14 +11,9 @@ const FAQ = require("./models/faqModel");
 const { connectRedis, getCache, setCache, deleteCache } = require("./config/redis");  // Import Redis utility
 const connectDB = require("./config/db");
 const requireLogin = require("./middleware/requireLogin");  // Import the middleware
+const translateText = require("./utils/translate");
 
 const port = 8080;
-const API_KEY = process.env.GOOGLE_CLOUD_API_KEY;
-
-if (!API_KEY) {
-    console.error("ERROR: GOOGLE_CLOUD_API_KEY is missing in .env file!");
-    process.exit(1);
-}
 
 connectDB().then();   // Establish Mongoose connection
 connectRedis().then();  // Establish Redis connection
@@ -32,31 +27,12 @@ app.engine("ejs", ejsMate);
 
 app.use(
     session({
-        secret: "your_secret_key",
+        secret: process.env.SECRET_KEY,
         resave: false,
         saveUninitialized: true,
         cookie: { secure: false },
     })
 );
-
-const translateText = async (text, targetLang) => {
-    try {
-        const response = await axios.post(
-            `https://translation.googleapis.com/language/translate/v2?key=${API_KEY}`,
-            {
-                q: text,
-                source: "en",
-                target: targetLang,
-                format: "text",
-            }
-        );
-
-        return response.data.data.translations[0].translatedText;
-    } catch (err) {
-        console.error(`Translation Error (${targetLang}):`, err.response?.data || err.message);
-        return text;
-    }
-};
 
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "password";
