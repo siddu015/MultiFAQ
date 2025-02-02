@@ -3,7 +3,6 @@ const API_KEY = process.env.GOOGLE_CLOUD_API_KEY;
 
 if (!API_KEY) {
     console.error("ERROR: GOOGLE_CLOUD_API_KEY is missing in .env file!");
-    process.exit(1);
 }
 
 const translateText = async (text, targetLang) => {
