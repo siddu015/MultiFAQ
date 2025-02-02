@@ -10,6 +10,7 @@ const session = require("express-session");
 const FAQ = require("./models/faqModel");
 const { connectRedis, getCache, setCache, deleteCache } = require("./config/redis");  // Import Redis utility
 const connectDB = require("./config/db");
+const requireLogin = require("./middleware/requireLogin");  // Import the middleware
 
 const port = 8080;
 const API_KEY = process.env.GOOGLE_CLOUD_API_KEY;
@@ -19,8 +20,8 @@ if (!API_KEY) {
     process.exit(1);
 }
 
-connectDB().then();
-connectRedis();  // Establish Redis connection
+connectDB().then();   // Establish Mongoose connection
+connectRedis().then();  // Establish Redis connection
 
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
@@ -60,12 +61,6 @@ const translateText = async (text, targetLang) => {
 const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "password";
 
-const requireLogin = (req, res, next) => {
-    if (!req.session.isAuthenticated) {
-        return res.redirect("/admin");
-    }
-    next();
-};
 
 app.get("/admin", (req, res) => {
     res.render("login");
