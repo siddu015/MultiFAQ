@@ -25,11 +25,10 @@ const faqSchema = new mongoose.Schema({
 
 // Method to get translated text based on language
 faqSchema.methods.getTranslatedText = function (lang) {
-    const translation = {
+    return {
         question: this.translations[`question_${lang}`] || this.question,
         answer: this.translations[`answer_${lang}`] || this.answer,
     };
-    return translation;
 };
 
 const FAQ = mongoose.model("FAQ", faqSchema);
