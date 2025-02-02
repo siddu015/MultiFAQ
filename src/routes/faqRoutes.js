@@ -5,6 +5,10 @@ const requireLogin = require("../middleware/requireLogin");
 const {getCache, setCache, deleteCache } = require("../config/redis");  // Import Redis utility
 const translateText = require("../utils/translate");
 
+router.get("/", async (req, res) => {
+    res.redirect("/faqs");
+});
+
 router.post("/admin/faq", async (req, res) => {
     const { question, answer } = req.body;
 

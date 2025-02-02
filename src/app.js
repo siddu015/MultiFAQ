@@ -37,5 +37,5 @@ app.use(faqRoutes);
 const port = 8080;
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on http://localhost:${port}/faqs`);
 });
