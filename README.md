@@ -116,7 +116,17 @@ You can also run this project using Docker and `docker-compose` for easy deploym
 - **Response**:
     - Returns a list of FAQs in the specified language.
     - If data is not cached, it fetches from the database and caches results in Redis.
+- Example Usage:
+   ```sh
+  # Fetch FAQs in English (default)
+   curl http://localhost:8080/api/faqs/
+   
+  # Fetch FAQs in Hindi
+   curl http://localhost:8080/api/faqs/?lang=hi
 
+   # Fetch FAQs in Bengali
+   curl http://localhost:8080/api/faqs/?lang=bn
+  ```
 ## Running Unit Tests
 This project includes unit tests for the FAQ routes, written using Jest.
 
