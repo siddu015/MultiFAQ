@@ -127,6 +127,7 @@ You can also run this project using Docker and `docker-compose` for easy deploym
    # Fetch FAQs in Bengali
    curl http://localhost:8080/api/faqs/?lang=bn
   ```
+
 ## Running Unit Tests
 This project includes unit tests for the FAQ routes, written using Jest.
 
@@ -140,6 +141,14 @@ npx jest tests/faqRoutes.test.js
 The tests cover:
 - Adding a new FAQ and ensuring that Redis cache is cleared.
 - Fetching FAQs from cache or database based on the cache state.
+
+## Screenshots
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+  <img width="45%" alt="Image 1" src="https://github.com/user-attachments/assets/317a15ae-0936-4292-8029-c94f836b7fcf" />
+  <img width="45%" alt="Image 2" src="https://github.com/user-attachments/assets/76a88e05-d56e-42d1-bc4c-340be8f47e04" />
+  <img width="45%" alt="Image 3" src="https://github.com/user-attachments/assets/13a1e239-3b08-44fc-b859-674482cbbb5f" />
+  <img width="45%" alt="Image 4" src="https://github.com/user-attachments/assets/44943e46-54b0-4bb1-8fd2-207d8b9c4fd4" />
+</div>
 
 ## Contribution Guidelines
 1. **Fork the repository.**
